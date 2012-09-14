@@ -22,7 +22,7 @@ struct data_out_item
 {
     struct data_out_item *prev;
     struct data_out_item *next;
-    
+
     char *data;
     uint32_t size;
 };
@@ -38,8 +38,8 @@ struct data_out_list
 
 struct netinfo
 {
-	char *address;
-	uint16_t port;
+    char *address;
+    uint16_t port;
 };
 
 static struct data_out_list data_queue;
@@ -61,20 +61,20 @@ static void queue_pop_front(void)
         return;
 
     it = data_queue.head;
-    
+
     if(it->next)
         it->next->prev = it->prev;
-    
+
     if(it->prev)
         it->prev->next = it->next;
-   
+
     data_queue.head = it->next;
     --data_queue.size;
-    
+
     if(data_queue.tail == it)
         data_queue.tail = data_queue.head;
 
-    
+
     free(it->data);
     free(it);
 }
@@ -82,12 +82,12 @@ static void queue_pop_front(void)
 static void queue_add(char *data, uint32_t size, uint32_t size_uncompressed)
 {
     uint32_t alloc_size = size + 14;
-    
+
     struct data_out_item *it = malloc(sizeof(struct data_out_item));
     it->next = NULL;
     it->data = malloc(sizeof(char)*alloc_size);
     it->size = alloc_size;
-    
+
     strcpy(it->data, "FRAM\n");
     it->data[6] = (size) >> 24;
     it->data[7] = (size) >> 16;
@@ -106,22 +106,22 @@ static void queue_add(char *data, uint32_t size, uint32_t size_uncompressed)
         queue_pop_front();
 
     it->prev = data_queue.tail;
-    
+
     if(data_queue.tail)
         data_queue.tail->next = it;
-    
+
     if(!data_queue.head)
         data_queue.head = it;
     data_queue.tail = it;
-    
+
     ++data_queue.size;
-    
+
     pthread_mutex_unlock(&data_queue.mutex);
 }
 
 static void *udp_thread_work(void *param)
 {
-	struct netinfo *netinfo = (struct netinfo*)param;
+    struct netinfo *netinfo = (struct netinfo*)param;
     struct sockaddr_in si_other;
     int sock;
 
@@ -142,11 +142,11 @@ static void *udp_thread_work(void *param)
 
     struct data_out_item *it;
     while(1)
-    {       
+    {
         pthread_mutex_lock(&data_queue.mutex);
         it = data_queue.head;
         pthread_mutex_unlock(&data_queue.mutex);
-        
+
         while(it)
         {
             char *itr = it->data;
@@ -174,35 +174,35 @@ static void *udp_thread_work(void *param)
 
 int main(int argc, char* argv[])
 {
-	printf("FBStream - streaming framebuffer via wifi\n");
-	if(argc < 3)
-	{
-		printf("Usage: %s <viewer's address> <port> [compression ratio (1-9)]\n", argv[0]);
-		return 0;
-	}
-	
-	struct netinfo info;
+    printf("FBStream - streaming framebuffer via wifi\n");
+    if(argc < 3)
+    {
+        printf("Usage: %s <viewer's address> <port> [compression ratio (1-9)]\n", argv[0]);
+        return 0;
+    }
+
+    struct netinfo info;
     info.address = malloc(sizeof(char)*(strlen(argv[1])+1));
     strcpy(info.address, argv[1]);
     info.port = atoi(argv[2]);
-	
-	int ratio = ZLIB_RATIO;
-	if(argc >= 4)
-	{
-		ratio = atoi(argv[3]);
-		if(ratio < 1)
-			ratio = 1;
-		else if(ratio > 9)
-			ratio = 9;
-	}
-	
-	printf("\nSending data to %s:%u\nCompression ratio: %d\n\n", info.address, info.port, ratio);
+
+    int ratio = ZLIB_RATIO;
+    if(argc >= 4)
+    {
+        ratio = atoi(argv[3]);
+        if(ratio < 1)
+            ratio = 1;
+        else if(ratio > 9)
+            ratio = 9;
+    }
+
+    printf("\nSending data to %s:%u\nCompression ratio: %d\n\n", info.address, info.port, ratio);
 
     init_out_list();
-    
+
     pthread_create(&net_thread, NULL, udp_thread_work, &info);
-    
-    int fd = open("/dev/graphics/fb0", O_RDONLY); 
+
+    int fd = open("/dev/graphics/fb0", O_RDONLY);
     if(fd == -1)
     {
         printf("failed to open framebuffer: %s (%d)\n", strerror(errno), errno);
@@ -214,7 +214,7 @@ int main(int argc, char* argv[])
 
     unsigned long len_buff;
     int len_read;
-    
+
     while(1)
     {
         len_read = read(fd, buff, FB_SIZE);
@@ -228,8 +228,8 @@ int main(int argc, char* argv[])
         lseek(fd, 0, SEEK_SET);
         usleep(1000);
     }
-    
+
     close(fd);
-    
+
     return 0;
 }

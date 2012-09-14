@@ -35,8 +35,8 @@ struct data_out_list
 
 struct netinfo
 {
-	char *address;
-	uint16_t port;
+    char *address;
+    uint16_t port;
 };
 
 static struct data_out_list data_queue;
@@ -46,7 +46,7 @@ static void init_out_list(void)
     pthread_mutex_init(&data_queue.mutex, NULL);
     data_queue.witr = 0;
     data_queue.ritr = 0;
-    
+
     int i = 0;
     for(; i < FRAME_BUFF; ++i)
         strcpy(data_queue.data[i].data, "FRAM\n");
@@ -55,27 +55,27 @@ static void init_out_list(void)
 static int incItr(int itr)
 {
     ++itr;
-    return itr >= FRAME_BUFF ? 0 : itr; 
+    return itr >= FRAME_BUFF ? 0 : itr;
 }
 
 static void queue_add(char *data, uint32_t size, uint32_t size_uncompressed)
 {
     pthread_mutex_lock(&data_queue.mutex);
-    
+
     int new_witr = incItr(data_queue.witr);
     if(new_witr == data_queue.ritr)
         data_queue.ritr = incItr(data_queue.ritr);
-    
+
     uint32_t alloc_size = size + 14;
     if(alloc_size >= FB_SIZE)
     {
         printf("Failed to add frame, buffer is too small!\n");
         return;
     }
-    
+
     data_queue.data[data_queue.witr].size = alloc_size;
     char *dst = data_queue.data[data_queue.witr].data;
-    
+
     dst[6] = (size) >> 24;
     dst[7] = (size) >> 16;
     dst[8] = (size) >> 8;
@@ -86,15 +86,15 @@ static void queue_add(char *data, uint32_t size, uint32_t size_uncompressed)
     dst[12] = (size_uncompressed) >> 8;
     dst[13] = (size_uncompressed);
     memcpy(dst+14, data, size);
-    
+
     data_queue.witr = new_witr;
-    
+
     pthread_mutex_unlock(&data_queue.mutex);
 }
 
 static void *udp_thread_work(void *param)
 {
-	struct netinfo *netinfo = (struct netinfo*)param;
+    struct netinfo *netinfo = (struct netinfo*)param;
     struct sockaddr_in si_other;
     int sock;
 
@@ -115,7 +115,7 @@ static void *udp_thread_work(void *param)
 
     struct data_out_item *it;
     while(1)
-    {       
+    {
         pthread_mutex_lock(&data_queue.mutex);
         if(data_queue.ritr == data_queue.witr)
             it = NULL;
@@ -125,7 +125,7 @@ static void *udp_thread_work(void *param)
             data_queue.ritr = incItr(data_queue.ritr);
         }
         pthread_mutex_unlock(&data_queue.mutex);
-        
+
         while(it)
         {
             char *itr = it->data;
@@ -158,35 +158,35 @@ static void *udp_thread_work(void *param)
 
 int main(int argc, char* argv[])
 {
-	printf("FBStream - streaming framebuffer via wifi\n");
-	if(argc < 3)
-	{
-		printf("Usage: %s <viewer's address> <port> [compression ratio (1-9)]\n", argv[0]);
-		return 0;
-	}
-	
-	struct netinfo info;
+    printf("FBStream - streaming framebuffer via wifi\n");
+    if(argc < 3)
+    {
+        printf("Usage: %s <viewer's address> <port> [compression ratio (1-9)]\n", argv[0]);
+        return 0;
+    }
+
+    struct netinfo info;
     info.address = malloc(sizeof(char)*(strlen(argv[1])+1));
     strcpy(info.address, argv[1]);
     info.port = atoi(argv[2]);
-	
-	int ratio = ZLIB_RATIO;
-	if(argc >= 4)
-	{
-		ratio = atoi(argv[3]);
-		if(ratio < 1)
-			ratio = 1;
-		else if(ratio > 9)
-			ratio = 9;
-	}
-	
-	printf("\nSending data to %s:%u\nCompression ratio: %d\n\n", info.address, info.port, ratio);
+
+    int ratio = ZLIB_RATIO;
+    if(argc >= 4)
+    {
+        ratio = atoi(argv[3]);
+        if(ratio < 1)
+            ratio = 1;
+        else if(ratio > 9)
+            ratio = 9;
+    }
+
+    printf("\nSending data to %s:%u\nCompression ratio: %d\n\n", info.address, info.port, ratio);
 
     init_out_list();
-    
+
     pthread_create(&net_thread, NULL, udp_thread_work, &info);
-    
-    int fd = open("/dev/graphics/fb0", O_RDONLY); 
+
+    int fd = open("/dev/graphics/fb0", O_RDONLY);
     if(fd == -1)
     {
         printf("failed to open framebuffer: %s (%d)\n", strerror(errno), errno);
@@ -198,7 +198,7 @@ int main(int argc, char* argv[])
 
     unsigned long len_buff;
     int len_read;
-    
+
     while(1)
     {
         len_read = read(fd, buff, FB_SIZE);
@@ -212,8 +212,8 @@ int main(int argc, char* argv[])
         lseek(fd, 0, SEEK_SET);
         usleep(1000);
     }
-    
+
     close(fd);
-    
+
     return 0;
 }
