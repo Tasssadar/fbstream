@@ -1,0 +1,19 @@
+<resources>
+
+    <string name="app_name">FBStream</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="menu_settings">Settings</string>
+    <string name="title_activity_main">FBStream</string>
+    <string-array name="comp_levels">
+        <item >Level 1</item>
+        <item >Level 2</item>
+        <item >Level 3</item>
+        <item >Level 4</item>
+        <item >Level 5</item>
+        <item >Level 6</item>
+        <item >Level 7</item>
+        <item >Level 8</item>
+        <item >Level 9</item>
+    </string-array>
+
+</resources>
