@@ -14,10 +14,18 @@ MainWindow::MainWindow(QWidget *parent) :
     m_socket.bind(33334);
 
     m_widget = new ViewWidget(this);
-    ui->mainLayout->insertWidget(1, m_widget, 1);
+    ui->area->setWidget(m_widget);
     resize(500, 600);
 
     connect(this, SIGNAL(data(QByteArray)), m_widget, SLOT(processData(QByteArray)), Qt::QueuedConnection);
+    connect(ui->scaleRadio, SIGNAL(toggled(bool)),     m_widget, SLOT(setResize(bool)));
+    connect(ui->wBox,       SIGNAL(valueChanged(int)), m_widget, SLOT(setResX(int)));
+    connect(ui->hBox,       SIGNAL(valueChanged(int)), m_widget, SLOT(setResY(int)));
+    connect(ui->rotBox,     SIGNAL(valueChanged(int)), m_widget, SLOT(setRotation(int)));
+    connect(ui->rotLeftBtn, SIGNAL(clicked()),         m_widget, SLOT(rotateLeft()));
+    connect(ui->rotRightBtn,SIGNAL(clicked()),         m_widget, SLOT(rotateRight()));
+
+    connect(m_widget, SIGNAL(rotChanged(int)), ui->rotBox, SLOT(setValue(int)));
 }
 
 MainWindow::~MainWindow()
@@ -35,9 +43,4 @@ void MainWindow::readyRead()
 
         m_widget->processData(datagram);
     }
-}
-
-void MainWindow::stateChanged(QAbstractSocket::SocketState state)
-{
-    ui->label->setText(QString("Server state: %1, addr: %2").arg(state).arg(m_socket.localAddress().toString()));
 }

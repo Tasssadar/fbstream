@@ -14,14 +14,15 @@ class MainWindow : public QMainWindow
 {
     Q_OBJECT
     
-Q_SIGNALS: void data(QByteArray data);
+Q_SIGNALS:
+    void data(QByteArray data);
+
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
     
 private slots:
     void readyRead();
-    void stateChanged(QAbstractSocket::SocketState state);
 
 private:
     Ui::MainWindow *ui;
