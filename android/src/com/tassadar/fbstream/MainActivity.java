@@ -19,6 +19,7 @@ import android.view.View;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RadioButton;
 import android.widget.Spinner;
 import android.widget.Toast;
 
@@ -37,14 +38,18 @@ public class MainActivity extends Activity {
         m_port = (EditText)findViewById(R.id.port);
         m_compression = (Spinner)findViewById(R.id.compression);
         m_btn = (Button)findViewById(R.id.start);
-        
+        m_tcp = (RadioButton)findViewById(R.id.tcp);
+        m_udp = (RadioButton)findViewById(R.id.udp);
+
         SharedPreferences cfg = getPreferences(MODE_PRIVATE);
         m_binary.setText(cfg.getString("binPath", ""));
         m_ip.setText(cfg.getString("ip", "192.168.0.154"));
         m_port.setText(cfg.getString("port", "33334"));
         m_compression.setSelection(cfg.getInt("compression", 0));
         m_last_copy = cfg.getLong("lastCopy", 0);
-        
+        m_udp.setChecked(cfg.getBoolean("useUDP", true));
+        m_tcp.setChecked(!cfg.getBoolean("useUDP", true));
+
         enableInput(false);
         
         checkRunning();
@@ -81,6 +86,7 @@ public class MainActivity extends Activity {
         cfg.putString("port", m_port.getText().toString());
         cfg.putInt("compression", (int)m_compression.getSelectedItemId());
         cfg.putLong("lastCopy", m_last_copy);
+        cfg.putBoolean("useUDP", m_udp.isChecked());
         cfg.commit();
     }
 
@@ -90,6 +96,8 @@ public class MainActivity extends Activity {
         m_ip.setEnabled(enable);
         m_port.setEnabled(enable);
         m_compression.setEnabled(enable);
+        m_udp.setEnabled(enable);
+        m_tcp.setEnabled(enable);
         m_btn.setText(enable ? "Start" : "Stop");
     }
 
@@ -205,6 +213,7 @@ public class MainActivity extends Activity {
                     str += bin + " ";
                     str += m_ip.getText() + " ";
                     str += m_port.getText() + " ";
+                    str += m_udp.isChecked() ? "udp " : "tcp ";
                     str += Integer.toString(m_compression.getSelectedItemPosition()+1);
                     str += " > /dev/null 2>&1 &";
                 }
@@ -289,4 +298,6 @@ public class MainActivity extends Activity {
     EditText m_port;
     Spinner m_compression;
     Button m_btn;
+    RadioButton m_tcp;
+    RadioButton m_udp;
 }

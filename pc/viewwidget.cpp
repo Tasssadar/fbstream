@@ -7,6 +7,8 @@
 #include "viewwidget.h"
 
 #define RAD(x) (x*(M_PI/180))
+#define LEN_TRESHOLD (320*480*4)
+
 ViewWidget::ViewWidget(QWidget *parent) :
     QWidget(parent)
 {
@@ -66,6 +68,13 @@ void ViewWidget::processData(QByteArray data)
             case 4:
             {
                 m_readPkt.len += 4;
+
+                if(m_readPkt.len >= LEN_TRESHOLD)
+                {
+                    m_readPkt.initLen(0);;
+                    continue;
+                }
+
                 m_readPkt.initLen(m_readPkt.len);
                 m_readPkt.pos = 5;
                 break;
@@ -73,23 +82,25 @@ void ViewWidget::processData(QByteArray data)
             // receive data
             case 5:
             {
-                for(; i < data.size(); ++i)
+                uchar *end = m_readPkt.data+m_readPkt.len;
+                for(; i < data.size() && m_readPkt.dataItr != end; ++i)
                 {
                     *m_readPkt.dataItr++ = (quint8)data[i];
+                }
 
-                    // frame complete
-                    if(m_readPkt.dataItr >= m_readPkt.data+m_readPkt.len)
+                // frame complete
+                if(m_readPkt.dataItr == end)
+                {
+                    QByteArray frame = qUncompress(m_readPkt.data, m_readPkt.len);
+                    if(!frame.isEmpty())
                     {
-                        QByteArray frame = qUncompress(m_readPkt.data, m_readPkt.len);
-                        if(!frame.isEmpty())
-                            m_draw = frame;
-
-                        m_readPkt.initLen(0);
-
+                        m_draw = frame;
                         ++m_frames;
                         ++m_framesAvg;
                         update();
                     }
+
+                    m_readPkt.initLen(0);
                 }
                 break;
             }

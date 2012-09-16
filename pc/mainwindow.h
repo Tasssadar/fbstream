@@ -3,6 +3,7 @@
 
 #include <QMainWindow>
 #include <QUdpSocket>
+#include <QTcpServer>
 
 namespace Ui {
     class MainWindow;
@@ -22,11 +23,16 @@ public:
     ~MainWindow();
     
 private slots:
-    void readyRead();
+    void readyReadUdp();
+    void readyReadTcp();
+    void addConn();
+    void listen(int port);
+    void tcpDisconnected();
 
 private:
     Ui::MainWindow *ui;
     QUdpSocket m_socket;
+    QTcpServer m_server;
     ViewWidget *m_widget;
 };
 
