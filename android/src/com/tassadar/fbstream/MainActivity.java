@@ -1,11 +1,16 @@
 package com.tassadar.fbstream;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -15,6 +20,8 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Spinner;
+import android.widget.Toast;
+
 
 public class MainActivity extends Activity {
 
@@ -32,10 +39,11 @@ public class MainActivity extends Activity {
         m_btn = (Button)findViewById(R.id.start);
         
         SharedPreferences cfg = getPreferences(MODE_PRIVATE);
-        m_binary.setText(cfg.getString("binPath", "/sd-ext/fbstream"));
+        m_binary.setText(cfg.getString("binPath", ""));
         m_ip.setText(cfg.getString("ip", "192.168.0.154"));
         m_port.setText(cfg.getString("port", "33334"));
         m_compression.setSelection(cfg.getInt("compression", 0));
+        m_last_copy = cfg.getLong("lastCopy", 0);
         
         enableInput(false);
         
@@ -72,6 +80,7 @@ public class MainActivity extends Activity {
         cfg.putString("ip", m_ip.getText().toString());
         cfg.putString("port", m_port.getText().toString());
         cfg.putInt("compression", (int)m_compression.getSelectedItemId());
+        cfg.putLong("lastCopy", m_last_copy);
         cfg.commit();
     }
 
@@ -104,9 +113,62 @@ public class MainActivity extends Activity {
            }
         }).start();
     }
-    
-    public void start_onClick(View v)
-    {
+
+    private String copyBin() {
+        String bin = "";
+        try {
+            bin = getFilesDir().toString() + "/fbstream";
+
+            byte[] buff = new byte[50];
+            File f = new File(bin);
+            if(f.exists())
+            {
+                InputStream date = getAssets().open("copytime.txt", AssetManager.ACCESS_BUFFER);
+                int res = date.read(buff);
+                date.close();
+
+                if(res != -1)
+                {
+                    String str = new String(buff).trim();
+                    long val = Long.decode(str);
+
+                    if(val <= m_last_copy) // do not copy, older file
+                        return bin;
+                    m_last_copy = val;
+                }
+            }
+            f = null;
+
+            InputStream in = getAssets().open("fbstream");
+            FileOutputStream out = openFileOutput("fbstream", Context.MODE_PRIVATE);
+
+            buff = new byte[5000];
+            for(int res = in.read(buff); res != -1; res = in.read(buff))
+                out.write(buff);
+
+            out.close();
+            in.close();
+
+            MainActivity.runCmd("chmod +x " + bin);
+        } catch (IOException e) {
+            m_btn.post(new Runnable() {
+                public void run()
+                {
+                    enableInput(!m_running);
+                    m_btn.setEnabled(true);
+                    setProgressBarIndeterminateVisibility(false);
+
+                    Toast toast = Toast.makeText(getApplicationContext(),
+                            "Failed to copy fbstream binary!", Toast.LENGTH_SHORT);
+                    toast.show();
+                }
+            });
+            return "";
+        }
+        return bin;
+    }
+
+    public void start_onClick(View v) {
         m_btn.setEnabled(false);
         saveCfg();
 
@@ -133,8 +195,11 @@ public class MainActivity extends Activity {
                 String str = "";
                 if(!m_running) {
                     String bin = m_binary.getText().toString();
-                    if(!bin.endsWith("/fbstream"))
+                    if(bin.length() != 0 && !bin.endsWith("/fbstream"))
                         bin += "/fbstream";
+
+                    if (bin.length() == 0)
+                        bin = copyBin();
 
                     str += "nohup ";
                     str += bin + " ";
@@ -217,6 +282,7 @@ public class MainActivity extends Activity {
         return res;
     }
 
+    long m_last_copy;
     boolean m_running;
     EditText m_binary;
     EditText m_ip;

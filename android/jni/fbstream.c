@@ -79,6 +79,7 @@ static void queue_pop_front(void)
     free(it);
 }
 
+
 static void queue_add(char *data, uint32_t size, uint32_t size_uncompressed)
 {
     uint32_t alloc_size = size + 14;
