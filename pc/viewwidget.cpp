@@ -91,7 +91,7 @@ void ViewWidget::processData(QByteArray data)
                 // frame complete
                 if(m_readPkt.dataItr == end)
                 {
-                    QByteArray frame = qUncompress(m_readPkt.data, m_readPkt.len);
+                    QByteArray frame = QByteArray((char*)m_readPkt.data+4, m_readPkt.len-4);
                     if(!frame.isEmpty())
                     {
                         m_draw = frame;
@@ -116,7 +116,7 @@ void ViewWidget::paintEvent(QPaintEvent *ev)
     if(!m_draw.isEmpty())
     {
         p.save();
-        QImage i = QImage((uchar*)m_draw.data(), m_resX, m_resY, QImage::Format_RGB16);
+        QImage i = QImage::fromData(m_draw, "jpg");
 
         if(m_resize)
         {
