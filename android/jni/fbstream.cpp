@@ -287,37 +287,43 @@ static void *tcp_thread_work(void *param)
     struct hostent *server;
     int sock;
 
-    if ((sock=socket(AF_INET, SOCK_STREAM, 0))==-1)
+    while(true)
     {
-        printf("errror opening %s %d\n", strerror(errno), errno);
-        return NULL;
+        if ((sock=socket(AF_INET, SOCK_STREAM, 0))==-1)
+        {
+            printf("errror opening %s %d\n", strerror(errno), errno);
+            sleep(3);
+            continue;
+        }
+
+        server = gethostbyname(netinfo->address);
+        if(!server)
+        {
+            printf("Could not find host %s", netinfo->address);
+            sleep(3);
+            continue;
+        }
+
+        memset((char *) &addr, 0, sizeof(addr));
+        addr.sin_family = AF_INET;
+        addr.sin_port = htons(netinfo->port);
+        memcpy((char*)&addr.sin_addr.s_addr, server->h_addr, server->h_length);
+
+        if(connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
+        {
+            printf("errror connecting %s %d\n", strerror(errno), errno);
+            sleep(3);
+            continue;
+        }
+
+        pthread_t workers[3];
+        for(int i = 0; i < 3; ++i)
+            pthread_create(&workers[i], NULL, tcp_worker_thread, (void*)&sock);
+
+        while(true) { sleep(1); }
+        
+        close(sock);
     }
-    
-    server = gethostbyname(netinfo->address);
-    if(!server)
-    {
-        printf("Could not find host %s", netinfo->address);
-        return NULL;
-    }
-
-    memset((char *) &addr, 0, sizeof(addr));
-    addr.sin_family = AF_INET;
-    addr.sin_port = htons(netinfo->port);
-    memcpy((char*)&addr.sin_addr.s_addr, server->h_addr, server->h_length);
-
-    if(connect(sock, (struct sockaddr*)&addr, sizeof(addr)) < 0)
-    {
-        printf("errror connecting %s %d\n", strerror(errno), errno);
-        return NULL;
-    }
-
-    pthread_t workers[3];
-    for(int i = 0; i < 3; ++i)
-        pthread_create(&workers[i], NULL, tcp_worker_thread, (void*)&sock);
-
-    while(true) { sleep(1); }
-    
-    close(sock);
     return NULL;
 }
 

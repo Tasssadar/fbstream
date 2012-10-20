@@ -72,9 +72,9 @@ void MainWindow::listen(int port)
 {
     m_socket.close();
     if(!m_socket.bind(port))
-        qFatal("UDP: Failed to bind on port %d ", m_socket.localPort());
+        qWarning("UDP: Failed to bind on port %d ", port);
 
     m_server.close();
     if(!m_server.listen(QHostAddress::Any, port))
-        qFatal("TCP: Failed to listen on port %d ", m_server.serverPort());
+         qWarning("TCP: Failed to listen on port %d ", port);
 }
