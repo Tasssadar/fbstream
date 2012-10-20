@@ -20,7 +20,6 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.RadioButton;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 
@@ -36,7 +35,8 @@ public class MainActivity extends Activity {
         m_binary = (EditText)findViewById(R.id.binary);
         m_ip = (EditText)findViewById(R.id.ip);
         m_port = (EditText)findViewById(R.id.port);
-        m_compression = (Spinner)findViewById(R.id.compression);
+        m_quality = (EditText)findViewById(R.id.quality);
+        m_scale = (EditText)findViewById(R.id.scale);
         m_btn = (Button)findViewById(R.id.start);
         m_tcp = (RadioButton)findViewById(R.id.tcp);
         m_udp = (RadioButton)findViewById(R.id.udp);
@@ -45,7 +45,8 @@ public class MainActivity extends Activity {
         m_binary.setText(cfg.getString("binPath", ""));
         m_ip.setText(cfg.getString("ip", "192.168.0.154"));
         m_port.setText(cfg.getString("port", "33334"));
-        m_compression.setSelection(cfg.getInt("compression", 0));
+        m_quality.setText(cfg.getString("quality", "60"));
+        m_scale.setText(cfg.getString("scale", "100"));
         m_last_copy = cfg.getLong("lastCopy", 0);
         m_udp.setChecked(cfg.getBoolean("useUDP", true));
         m_tcp.setChecked(!cfg.getBoolean("useUDP", true));
@@ -84,7 +85,8 @@ public class MainActivity extends Activity {
         cfg.putString("binPath", m_binary.getText().toString());
         cfg.putString("ip", m_ip.getText().toString());
         cfg.putString("port", m_port.getText().toString());
-        cfg.putInt("compression", (int)m_compression.getSelectedItemId());
+        cfg.putString("quality", m_quality.getText().toString());
+        cfg.putString("scale", m_scale.getText().toString());
         cfg.putLong("lastCopy", m_last_copy);
         cfg.putBoolean("useUDP", m_udp.isChecked());
         cfg.commit();
@@ -95,7 +97,8 @@ public class MainActivity extends Activity {
         m_binary.setEnabled(enable);
         m_ip.setEnabled(enable);
         m_port.setEnabled(enable);
-        m_compression.setEnabled(enable);
+        m_quality.setEnabled(enable);
+        m_scale.setEnabled(enable);
         m_udp.setEnabled(enable);
         m_tcp.setEnabled(enable);
         m_btn.setText(enable ? "Start" : "Stop");
@@ -157,7 +160,7 @@ public class MainActivity extends Activity {
             out.close();
             in.close();
 
-            MainActivity.runCmd("chmod +x " + bin);
+            MainActivity.runCmd("chmod 775 " + bin);
         } catch (IOException e) {
             m_btn.post(new Runnable() {
                 public void run()
@@ -214,7 +217,8 @@ public class MainActivity extends Activity {
                     str += m_ip.getText() + " ";
                     str += m_port.getText() + " ";
                     str += m_udp.isChecked() ? "udp " : "tcp ";
-                    //str += Integer.toString(m_compression.getSelectedItemPosition()+1);
+                    str += m_quality.getText() + " ";
+                    str += m_scale.getText() + " ";
                     str += " > /dev/null 2>&1 &";
                 }
                 else
@@ -296,7 +300,8 @@ public class MainActivity extends Activity {
     EditText m_binary;
     EditText m_ip;
     EditText m_port;
-    Spinner m_compression;
+    EditText m_quality;
+    EditText m_scale;
     Button m_btn;
     RadioButton m_tcp;
     RadioButton m_udp;
