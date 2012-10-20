@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>672</width>
+    <width>687</width>
     <height>379</height>
    </rect>
   </property>
@@ -63,7 +63,7 @@
          <number>10000</number>
         </property>
         <property name="value">
-         <number>320</number>
+         <number>800</number>
         </property>
        </widget>
       </item>
@@ -83,7 +83,7 @@
          <number>10000</number>
         </property>
         <property name="value">
-         <number>480</number>
+         <number>1280</number>
         </property>
        </widget>
       </item>
@@ -189,7 +189,7 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>650</width>
+           <width>665</width>
            <height>325</height>
           </rect>
          </property>

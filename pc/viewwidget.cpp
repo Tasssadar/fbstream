@@ -7,7 +7,7 @@
 #include "viewwidget.h"
 
 #define RAD(x) (x*(M_PI/180))
-#define LEN_TRESHOLD (320*480*4)
+#define LEN_TRESHOLD (800*1280*4)
 
 ViewWidget::ViewWidget(QWidget *parent) :
     QWidget(parent)
@@ -17,8 +17,8 @@ ViewWidget::ViewWidget(QWidget *parent) :
     m_resize = false;
     m_avgFps = 0;
     m_framesAvg = 0;
-    m_resX = 320;
-    m_resY = 480;
+    m_resX = 800;
+    m_resY = 1280;
     m_rot = 0;
 
     memset(&m_ren.rot, 0, sizeof(m_ren));
@@ -60,23 +60,23 @@ void ViewWidget::processData(QByteArray data)
 
         // read len
         for(;m_readPkt.pos < 4; ++m_readPkt.pos)
-            m_readPkt.len |= quint8(data[i++]) << (3 - m_readPkt.pos)*8;
+            m_readPkt.len |= quint8(data[i++]) << (m_readPkt.pos)*8;
+
 
         switch(m_readPkt.pos)
         {
             // set len
             case 4:
             {
-                m_readPkt.len += 4;
-
                 if(m_readPkt.len >= LEN_TRESHOLD)
                 {
-                    m_readPkt.initLen(0);;
+                    m_readPkt.initLen(0);
                     continue;
                 }
 
                 m_readPkt.initLen(m_readPkt.len);
                 m_readPkt.pos = 5;
+
                 break;
             }
             // receive data
@@ -91,7 +91,7 @@ void ViewWidget::processData(QByteArray data)
                 // frame complete
                 if(m_readPkt.dataItr == end)
                 {
-                    QByteArray frame = qUncompress(m_readPkt.data, m_readPkt.len);
+                    QByteArray frame((char*)m_readPkt.data, m_readPkt.len);
                     if(!frame.isEmpty())
                     {
                         m_draw = frame;
@@ -112,11 +112,10 @@ void ViewWidget::paintEvent(QPaintEvent *ev)
 {
     QPainter p(this);
 
-#if 1
     if(!m_draw.isEmpty())
     {
         p.save();
-        QImage i = QImage((uchar*)m_draw.data(), m_resX, m_resY, QImage::Format_RGB16);
+        QImage i = QImage::fromData(m_draw, "jpg");
 
         if(m_resize)
         {
@@ -133,48 +132,6 @@ void ViewWidget::paintEvent(QPaintEvent *ev)
         p.drawText(rect(), Qt::AlignCenter, "Waiting for the first frame...");
         return;
     }
-#else  // Nexus 7 test
-    if(m_draw.isEmpty())
-    {
-        QFile f("/home/tassadar/Lorris/xda_tass_fb1.dat");
-        f.open(QIODevice::ReadOnly);
-        m_draw = f.readAll();
-
-        for(int i = 0; i < m_draw.size(); i+=4)
-        {
-            quint32 val = quint8(m_draw[i]) << 24;
-            val |= m_draw[i+1] << 16;
-            val |= m_draw[i+2] << 8;
-            val |= m_draw[i+3];
-
-            //*((quint32*)(m_draw.data()+i)) = (0xFF << 24) | val >> 8;
-            /*quint8 a = m_draw[i];
-            quint8 r = m_draw[i+3];
-            quint8 g = m_draw[i+2];
-            quint8 b = m_draw[i+1];
-
-            m_draw[i] = a;
-            m_draw[i+1] = r;
-            m_draw[i+2] = g;
-            m_draw[i+3] = b;
-
-            quint32 val = quint8(m_draw[i]) << 24;
-            val |= m_draw[i+1] << 16;
-            val |= m_draw[i+2] << 8;
-            val |= m_draw[i+3];
-
-            quint32 val2 = m_draw[i+3] << 24;
-            val2 |= m_draw[i+2] << 16;
-            val2 |= m_draw[i+1] << 8;
-            val2 |= m_draw[i];*/
-
-
-           // qDebug("0x%X 0x%X", val, val2);
-        }
-    }
-
-    p.drawImage(0, 0, QImage((uchar*)m_draw.data(), 1280, 800, QImage::Format_ARGB32));
-#endif
 
     p.setBrush(QBrush(Qt::SolidPattern));
     p.drawRect(0, 0, 35, 30);

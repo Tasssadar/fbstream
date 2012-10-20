@@ -13,6 +13,9 @@
 #include <zlib.h>
 #include <netdb.h>
 
+#include <binder/IMemory.h>
+#include <gui/SurfaceComposerClient.h>
+
 #define FB_SIZE (480*320*2)
 #define ZLIB_RATIO 1
 #define CON_UDP 0

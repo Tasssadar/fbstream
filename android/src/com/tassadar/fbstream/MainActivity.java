@@ -214,7 +214,7 @@ public class MainActivity extends Activity {
                     str += m_ip.getText() + " ";
                     str += m_port.getText() + " ";
                     str += m_udp.isChecked() ? "udp " : "tcp ";
-                    str += Integer.toString(m_compression.getSelectedItemPosition()+1);
+                    //str += Integer.toString(m_compression.getSelectedItemPosition()+1);
                     str += " > /dev/null 2>&1 &";
                 }
                 else
