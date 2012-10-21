@@ -4,6 +4,9 @@
 #include <QDateTime>
 #include <QFile>
 #include <math.h>
+#include <QDialog>
+#include <QHBoxLayout>
+
 #include "viewwidget.h"
 
 #define RAD(x) (x*(M_PI/180))
@@ -20,6 +23,8 @@ ViewWidget::ViewWidget(QWidget *parent) :
     m_resX = 800;
     m_resY = 1280;
     m_rot = 0;
+
+    setAutoFillBackground(true);
 
     memset(&m_ren.rot, 0, sizeof(m_ren));
 
@@ -275,4 +280,9 @@ void ViewWidget::fpsAvg()
     m_framesAvg = 0;
     last = now;
     update();
+}
+
+void ViewWidget::mouseDoubleClickEvent(QMouseEvent *ev)
+{
+    emit leaveFullscreen();
 }

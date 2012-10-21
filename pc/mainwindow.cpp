@@ -1,4 +1,8 @@
 #include <QElapsedTimer>
+#include <QDialog>
+#include <QHBoxLayout>
+#include <QDesktopWidget>
+#include <QApplication>
 #include "mainwindow.h"
 #include "viewwidget.h"
 #include "ui_mainwindow.h"
@@ -12,10 +16,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(&m_socket, SIGNAL(readyRead()), SLOT(readyReadUdp()));
     connect(&m_server, SIGNAL(newConnection()), SLOT(addConn()));
-
     listen(33334);
 
     m_widget = new ViewWidget(this);
+    m_fullWindow = NULL;
+
     ui->area->setWidget(m_widget);
     resize(500, 600);
 
@@ -26,6 +31,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->rotBox,     SIGNAL(valueChanged(int)), m_widget, SLOT(setRotation(int)));
     connect(ui->rotLeftBtn, SIGNAL(clicked()),         m_widget, SLOT(rotateLeft()));
     connect(ui->rotRightBtn,SIGNAL(clicked()),         m_widget, SLOT(rotateRight()));
+    connect(ui->fullScreenBtn, SIGNAL(clicked()),      SLOT(enterFullscreen()));
+    connect(m_widget,       SIGNAL(leaveFullscreen()), SLOT(leaveFullscreen()));
     connect(ui->portBox,    SIGNAL(valueChanged(int)), SLOT(listen(int)));
 
     connect(m_widget, SIGNAL(rotChanged(int)), ui->rotBox, SLOT(setValue(int)));
@@ -77,4 +84,37 @@ void MainWindow::listen(int port)
     m_server.close();
     if(!m_server.listen(QHostAddress::Any, port))
          qWarning("TCP: Failed to listen on port %d ", port);
+}
+
+void MainWindow::enterFullscreen()
+{
+    ui->scaleRadio->setChecked(true);
+
+    m_fullWindow = new QDialog(this);
+
+    ui->area->takeWidget();
+
+    QPalette p = m_widget->palette();
+    p.setColor(QPalette::Window, Qt::black);
+    m_widget->setPalette(p);
+
+    QHBoxLayout *l = new QHBoxLayout(m_fullWindow);
+    l->addWidget(m_widget);
+    l->setSpacing(0);
+    l->setMargin(0);
+    m_fullWindow->resize(QApplication::desktop()->screenGeometry().size());
+    m_fullWindow->showFullScreen();
+}
+
+void MainWindow::leaveFullscreen()
+{
+    if(!m_fullWindow)
+        return enterFullscreen();
+
+    m_widget->setPalette(QApplication::palette());
+
+    m_fullWindow->showNormal();
+    ui->area->setWidget(m_widget);
+    delete m_fullWindow;
+    m_fullWindow = NULL;
 }

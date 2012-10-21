@@ -10,6 +10,7 @@ namespace Ui {
 }
 
 class ViewWidget;
+class QDialog;
 
 class MainWindow : public QMainWindow
 {
@@ -28,12 +29,15 @@ private slots:
     void addConn();
     void listen(int port);
     void tcpDisconnected();
+    void enterFullscreen();
+    void leaveFullscreen();
 
 private:
     Ui::MainWindow *ui;
     QUdpSocket m_socket;
     QTcpServer m_server;
     ViewWidget *m_widget;
+    QDialog *m_fullWindow;
 };
 
 #endif // MAINWINDOW_H

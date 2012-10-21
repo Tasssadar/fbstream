@@ -44,8 +44,10 @@ struct renderData
 class ViewWidget : public QWidget
 {
     Q_OBJECT
+
 Q_SIGNALS:
     void rotChanged(int rot);
+    void leaveFullscreen();
 
 public:
     explicit ViewWidget(QWidget *parent = 0);
@@ -63,6 +65,7 @@ public slots:
 protected:
     void paintEvent(QPaintEvent *ev);
     void resizeEvent(QResizeEvent *ev);
+    void mouseDoubleClickEvent(QMouseEvent *ev);
 
 private slots:
     void fpsTime();
