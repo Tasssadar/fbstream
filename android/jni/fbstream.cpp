@@ -373,9 +373,8 @@ void resize(char *in, char *out, int w, int h, int resW, int resH)
     }
 }
 
-static int to16bit(char *in, char *out, uint32_t len)
+static void to16bit(char *in, char *out, uint32_t len)
 {
-    int r, g, b;
     uint32_t px, y = 0;
     for(uint32_t i = 0; i < len;)
     {
@@ -386,7 +385,6 @@ static int to16bit(char *in, char *out, uint32_t len)
         i+=4;
         y+=2;
     }
-    return y;
 }
 
 #define BUFF_SIZE 50
