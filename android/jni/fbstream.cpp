@@ -34,6 +34,9 @@ static pthread_t net_thread;
 static pthread_t screen_threads[SCREEN_THREADS];
 static int quality = 60;
 static int scale = 100;
+static int w;
+static int h;
+static bool bit16 = false;
 
 struct data_out_item
 {
@@ -247,7 +250,6 @@ static void *udp_thread_work(void *param)
                 itr += chunk;
                 it->size -= chunk;
             }
-            printf("sent\n");
 
             data_queue.addFree(it);
             it = data_queue.getSend();
@@ -321,7 +323,7 @@ static void *tcp_thread_work(void *param)
             pthread_create(&workers[i], NULL, tcp_worker_thread, (void*)&sock);
 
         while(true) { sleep(1); }
-        
+
         close(sock);
     }
     return NULL;
@@ -371,8 +373,21 @@ void resize(char *in, char *out, int w, int h, int resW, int resH)
     }
 }
 
-static int w;
-static int h;
+static int to16bit(char *in, char *out, uint32_t len)
+{
+    int r, g, b;
+    uint32_t px, y = 0;
+    for(uint32_t i = 0; i < len;)
+    {
+        px = *((uint32_t*)(in+i));
+        //                                B                      G                    R
+        *((uint16_t*)(out+y)) = ((((px & 0xFF) << 8) & 0xF800) | (((px & 0xFF00) >> 5) & 0x7E0) | ((px & 0xFF0000) >> 19));
+
+        i+=4;
+        y+=2;
+    }
+    return y;
+}
 
 #define BUFF_SIZE 50
 
@@ -447,15 +462,13 @@ private:
     int m_ritr;
     int m_witr;
     pthread_mutex_t mutex;
-};
-
-framebuffer fb;
+} fb;
 
 static void *encode_thread(void *data)
 {
 
     SkBitmap b;
-    b.setConfig(SkBitmap::kARGB_8888_Config, w, h);
+    b.setConfig(bit16 ? SkBitmap::kRGB_565_Config : SkBitmap::kARGB_8888_Config, w, h);
     b.setPixels(data);
 
     SkDynamicMemoryWStream stream;
@@ -473,8 +486,8 @@ int main(int argc, char* argv[])
     printf("FBStream - streaming framebuffer via wifi\n");
     if(argc < 3)
     {
-        printf("Usage: %s <viewer's address> <port> [tcp/udp] [jpeg quality (0 - 100, default 60)] [scale percent (default 100)]\n", argv[0]);
-        printf("Example: %s 192.168.0.100 33333 udp 40 2 50\n", argv[0]);
+        printf("Usage: %s <viewer's address> <port> [tcp/udp] [jpeg quality (0 - 100, default 60)] [scale percent (default 100)] [16bit]\n", argv[0]);
+        printf("Example: %s 192.168.0.100 33333 udp 40 2 50 16bit\n", argv[0]);
         return 0;
     }
 
@@ -484,6 +497,10 @@ int main(int argc, char* argv[])
     switch(argc)
     {
         default:
+        case 7:
+            if(strcmp(argv[6], "16bit") == 0)
+                bit16 = true;
+            // fallthrough
         case 6:
             scale = atoi(argv[5]);
             if(scale < 1)
@@ -516,7 +533,8 @@ int main(int argc, char* argv[])
             break;
     }
 
-    printf("\nSending data to %s:%u (%s)\nJPEG quality: %d\n Scale: %d%%\n\n", info.address, info.port, con == CON_UDP ? "udp" : "tcp", quality, scale);
+    printf("\nSending data to %s:%u (%s)\nJPEG quality: %d\nScale: %d%%\n16bit: %s\n\n",
+           info.address, info.port, con == CON_UDP ? "udp" : "tcp", quality, scale, bit16 ? "true" : "false");
 
     // Init net thread
     if(con == CON_UDP)
@@ -543,6 +561,8 @@ int main(int argc, char* argv[])
 
         if(scale != 100)
             resize((char*)sc.getPixels(), buff, 800, 1280, w, h);
+        else if(bit16)
+            to16bit((char*)sc.getPixels(), buff, sc.getSize());
         else
             memcpy(buff, (char*)sc.getPixels(), sc.getSize());
 

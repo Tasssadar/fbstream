@@ -40,6 +40,8 @@ public class MainActivity extends Activity {
         m_btn = (Button)findViewById(R.id.start);
         m_tcp = (RadioButton)findViewById(R.id.tcp);
         m_udp = (RadioButton)findViewById(R.id.udp);
+        m_32bit = (RadioButton)findViewById(R.id.bit32);
+        m_16bit = (RadioButton)findViewById(R.id.bit16);
 
         SharedPreferences cfg = getPreferences(MODE_PRIVATE);
         m_binary.setText(cfg.getString("binPath", ""));
@@ -50,6 +52,8 @@ public class MainActivity extends Activity {
         m_last_copy = cfg.getLong("lastCopy", 0);
         m_udp.setChecked(cfg.getBoolean("useUDP", true));
         m_tcp.setChecked(!cfg.getBoolean("useUDP", true));
+        m_32bit.setChecked(!cfg.getBoolean("16bit", false));
+        m_16bit.setChecked(cfg.getBoolean("16bit", false));
 
         enableInput(false);
         
@@ -89,6 +93,7 @@ public class MainActivity extends Activity {
         cfg.putString("scale", m_scale.getText().toString());
         cfg.putLong("lastCopy", m_last_copy);
         cfg.putBoolean("useUDP", m_udp.isChecked());
+        cfg.putBoolean("16bit", m_16bit.isChecked());
         cfg.commit();
     }
 
@@ -101,6 +106,8 @@ public class MainActivity extends Activity {
         m_scale.setEnabled(enable);
         m_udp.setEnabled(enable);
         m_tcp.setEnabled(enable);
+        m_32bit.setEnabled(enable);
+        m_16bit.setEnabled(enable);
         m_btn.setText(enable ? "Start" : "Stop");
     }
 
@@ -219,6 +226,8 @@ public class MainActivity extends Activity {
                     str += m_udp.isChecked() ? "udp " : "tcp ";
                     str += m_quality.getText() + " ";
                     str += m_scale.getText() + " ";
+                    if(m_16bit.isChecked())
+                        str += "16bit ";
                     str += " > /dev/null 2>&1 &";
                 }
                 else
@@ -305,4 +314,6 @@ public class MainActivity extends Activity {
     Button m_btn;
     RadioButton m_tcp;
     RadioButton m_udp;
+    RadioButton m_32bit;
+    RadioButton m_16bit;
 }
